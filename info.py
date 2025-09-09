@@ -68,7 +68,6 @@ APPROVED = environ.get("APPROVED_WELCOME", "on").lower()
 # MongoDB Configuration
 # ============================
 DATABASE_URI = environ.get('DATABASE_URI', "")
-DATABASE_URI2 = environ.get('DATABASE_URI2', "")
 DATABASE_NAME = environ.get('DATABASE_NAME', "unix")
 COLLECTION_NAME = environ.get('COLLECTION_NAME', 'yoonbot')
 
