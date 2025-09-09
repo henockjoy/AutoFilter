@@ -4,8 +4,8 @@ from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from pyrogram.errors.exceptions.bad_request_400 import MessageTooLong, PeerIdInvalid
 from info import *
-from database.users_chats_db import db, db2
-from database.ia_filterdb import Media, Media2
+from database.users_chats_db import db
+from database.ia_filterdb import Media
 from utils import get_size, temp, get_settings, get_readable_time
 from Script import script
 from pyrogram.errors import ChatAdminRequired
@@ -29,7 +29,7 @@ async def save_group(bot, message):
         if message.chat.id in temp.BANNED_CHATS:
             # Inspired from a boat of a banana tree
             buttons = [[
-                InlineKeyboardButton('• ᴄᴏɴᴛᴀᴄᴛ ꜱᴜᴘᴘᴏʀᴛ •', url=f'https://t.me/codeflixsupport')
+                InlineKeyboardButton('• ᴄᴏɴᴛᴀᴄᴛ ꜱᴜᴘᴘᴏʀᴛ •', url=f'https://t.me/FTAdminbot')
             ]]
             reply_markup=InlineKeyboardMarkup(buttons)
             k = await message.reply(
@@ -44,8 +44,8 @@ async def save_group(bot, message):
             await bot.leave_chat(message.chat.id)
             return
         buttons = [[
-                    InlineKeyboardButton('sᴜᴘᴘᴏʀᴛ', url='https://telegram.me/codeflixsupport'),
-                    InlineKeyboardButton('ᴜᴘᴅᴀᴛᴇꜱ', url='https://telegram.me/codeflix_bots')
+                    InlineKeyboardButton('sᴜᴘᴘᴏʀᴛ', url='https://telegram.me/TeamYoonseri'),
+                    InlineKeyboardButton('ᴜᴘᴅᴀᴛᴇꜱ', url='https://telegram.me/FT_Channels')
                   ]]
         reply_markup=InlineKeyboardMarkup(buttons)
         await message.reply_text(
@@ -65,7 +65,7 @@ async def save_group(bot, message):
                                                  caption=(script.MELCOW_ENG.format(u.mention, message.chat.title)),
                                                  reply_markup=InlineKeyboardMarkup(
                                                                          [[
-                                                                           InlineKeyboardButton('• ᴊᴏɪɴ ᴍʏ ᴜᴘᴅᴀᴛᴇs •', url='https://t.me/codeflix_bots')
+                                                                           InlineKeyboardButton('• ᴊᴏɪɴ ᴍʏ ᴜᴘᴅᴀᴛᴇs •', url='https://t.me/FT_Channels')
                                                                          ]]
                                                  ),
                                                  parse_mode=enums.ParseMode.HTML
@@ -90,7 +90,7 @@ async def leave_a_chat(bot, message):
         chat = chat
     try:
         buttons = [[
-                  InlineKeyboardButton('sᴜᴘᴘᴏʀᴛ', url='https://telegram.me/codeflixsupport')
+                  InlineKeyboardButton('sᴜᴘᴘᴏʀᴛ', url='https://telegram.me/TeamYoonseri')
                   ]]
         reply_markup=InlineKeyboardMarkup(buttons)
         await bot.send_message(
@@ -129,7 +129,7 @@ async def disable_chat(bot, message):
     await message.reply('Chat Successfully Disabled')
     try:
         buttons = [[
-            InlineKeyboardButton('sᴜᴘᴘᴏʀᴛ', url='https://telegram.me/codeflixsupport')
+            InlineKeyboardButton('sᴜᴘᴘᴏʀᴛ', url='https://telegram.me/TeamYoonseri')
         ]]
         reply_markup=InlineKeyboardMarkup(buttons)
         await bot.send_message(
@@ -171,15 +171,10 @@ async def get_ststs(bot, message):
     free = 536870912 - size
     size = get_size(size)
     free = get_size(free)
-    files = await Media2.count_documents()
-    size2 = await db2.get_db_size()
-    free2 = 536870912 - size2
-    size2 = get_size(size2)
-    free2 = get_size(free2)
     uptime = get_readable_time(time() - botStartTime)
     ram = psutil.virtual_memory().percent
     cpu = psutil.cpu_percent()
-    await rju.edit(script.STATUS_TXT.format(total_users, totl_chats, premium, file, size, free, files, size2, free2, uptime, ram, cpu, (int(file)+int(files)) ))
+    await rju.edit(script.STATUS_TXT.format(total_users, totl_chats, premium, file, size, free, files, uptime, ram, cpu, (int(file)+int(files)) ))
 
 
 @Client.on_message(filters.command('invite') & filters.user(ADMINS))
