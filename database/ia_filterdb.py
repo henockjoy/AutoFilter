@@ -203,16 +203,51 @@ def unpack_new_file_id(new_file_id):
     return file_id, file_ref
 
 
+# New Announced collection
+announced_collection = db["Announced"]
+
+async def already_announced(title: str) -> bool:
+    exists = await announced_collection.find_one({"title": title})
+    return exists is not None
+
+async def mark_announced(title: str):
+    await announced_collection.insert_one({"title": title})
+
+
 async def send_msg(bot, filename, caption):
     try:
-        # Clean inputs
-        filename = re.sub(r'\(\@\S+\)|\[\@\S+\]|\b@\S+|\bwww\.\S+', '', filename).strip()
+        # Clean filename & caption
+        raw_filename = filename
+        filename = re.sub(r'\(\@\S+\)|\[\@\S+\]|\b@\S+|\bwww\.\S+', '', raw_filename).strip()
         caption = re.sub(r'\(\@\S+\)|\[\@\S+\]|\b@\S+|\bwww\.\S+', '', caption or "").strip()
 
-        # Detect TV Series / Movie
-        season_match = re.search(r"(S\d{1,2}E\d{1,2}|Season\s?\d+|Episode\s?\d+)", caption, re.I) \
-                       or re.search(r"(S\d{1,2}E\d{1,2}|Season\s?\d+|Episode\s?\d+)", filename, re.I)
-        file_type = "𝖳𝖵𝖲𝖤𝖱𝖨𝖤𝖲" if season_match else "𝖬𝖮𝖵𝖨𝖤"
+        # Detect year
+        year_match = re.search(r"\b(19|20)\d{2}\b", filename)
+        year = year_match.group(0) if year_match else None
+
+        # Detect series (Season/Episode)
+        season_match = re.search(r"(S\d{1,2})", filename, re.I)
+        episode_match = re.search(r"(E\d{1,2})", filename, re.I)
+
+        if season_match:  # TV Series
+            file_type = "𝖳𝖵𝖲𝖤𝖱𝖨𝖤𝖲"
+            if episode_match:
+                clean_title = f"{filename.split(season_match.group(1))[0].strip()} {season_match.group(1).upper()}{episode_match.group(1).upper()}"
+            else:
+                clean_title = f"{filename.split(season_match.group(1))[0].strip()} {season_match.group(1).upper()}"
+        else:  # Movie
+            file_type = "𝖬𝖮𝖵𝖨𝖤"
+            if year:
+                clean_title = f"{filename.split(year)[0].strip()} {year}"
+            else:
+                clean_title = filename.split(".")[0].strip()
+
+        clean_title = re.sub(r"[\(\)\[\]\{\}:;'\-!.,_]+", " ", clean_title).strip()
+
+        # Check if already announced (per movie or per episode)
+        if await already_announced(clean_title.lower()):
+            logger.info(f"Skipping duplicate announcement for {clean_title}")
+            return
 
         # Detect languages
         language = ""
@@ -221,12 +256,12 @@ async def send_msg(bot, filename, caption):
                 language += f"{lang}, "
         language = language.rstrip(", ") if language else "Unknown"
 
-        # Links & details
+        # IMDb/TMDb details
         imdb_link, tmdb_link, genres, imdb_rating = None, None, None, None
         resized_poster = None
 
-        if await add_name(OWNERID, filename):
-            imdb = await get_movie_details(filename)
+        if await add_name(OWNERID, clean_title):
+            imdb = await get_movie_details(clean_title)
             if imdb:
                 imdb_link = imdb.get('imdb_url')
                 tmdb_link = imdb.get('tmdb_url')
@@ -236,7 +271,7 @@ async def send_msg(bot, filename, caption):
                     resized_poster = await fetch_image(imdb['poster_url'])
 
         # Build styled caption
-        text = f"✅<b>{filename} #{file_type}</b>\n\n"
+        text = f"<b>✅ {clean_title}</b> #{file_type}\n\n"
         text += f"<blockquote>🎙 {language}</blockquote>\n\n"
 
         rating_links = []
@@ -251,17 +286,17 @@ async def send_msg(bot, filename, caption):
             text += " | ".join(rating_links) + "\n"
 
         if genres:
-            text += f"🎬 Genre: {', '.join(genres)}\n"
+            text += f"🎬 Genre: {', '.join(dict.fromkeys(genres))}\n"  # remove duplicates
 
         # Ensure bot username exists
         if not temp.U_NAME:
             logger.error("Bot username (U_NAME) not set in temp.")
             return
 
-        filenames = filename.replace(" ", '-')
+        filenames = clean_title.replace(" ", '-')
         btn = [[
             InlineKeyboardButton(
-                '📁 𝖢𝗅𝗂𝖼𝗄 𝗍𝗈 𝖲𝖾𝖺𝗋𝖼𝗁',
+                '🔍 Tap to Search',
                 url=f"https://telegram.me/{temp.U_NAME}?start=getfile-{filenames}"
             )
         ]]
@@ -280,6 +315,9 @@ async def send_msg(bot, filename, caption):
                 text=text,
                 reply_markup=InlineKeyboardMarkup(btn)
             )
+
+        # Mark as announced (prevents duplicates next time)
+        await mark_announced(clean_title.lower())
 
     except Exception as e:
         logger.error(f"Error in send_msg: {e}", exc_info=True)
