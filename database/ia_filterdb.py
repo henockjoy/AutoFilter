@@ -244,7 +244,7 @@ async def send_msg(bot, filename, caption):
 
         clean_title = re.sub(r"[\(\)\[\]\{\}:;'\-!.,_]+", " ", clean_title).strip()
 
-        # Check if already announced (per movie or per episode)
+        # Skip duplicate announcements
         if await already_announced(clean_title.lower()):
             logger.info(f"Skipping duplicate announcement for {clean_title}")
             return
@@ -257,36 +257,45 @@ async def send_msg(bot, filename, caption):
         language = language.rstrip(", ") if language else "Unknown"
 
         # IMDb/TMDb details
-        imdb_link, tmdb_link, genres, imdb_rating = None, None, None, None
-        resized_poster = None
+        imdb_link, tmdb_link, genres, resized_poster = None, None, None, None
 
         if await add_name(OWNERID, clean_title):
             imdb = await get_movie_details(clean_title)
             if imdb:
                 imdb_link = imdb.get('imdb_url')
                 tmdb_link = imdb.get('tmdb_url')
-                genres = imdb.get('genres')
-                imdb_rating = imdb.get('rating')  # e.g. "8.7"
+                genres = imdb.get('genres')  # string or list
                 if imdb.get('poster_url'):
                     resized_poster = await fetch_image(imdb['poster_url'])
 
-        # Build styled caption
+        # Build caption
         text = f"<b>✅ {clean_title}</b> #{file_type}\n\n"
         text += f"<blockquote>🎙 {language}</blockquote>\n\n"
 
-        rating_links = []
-        if imdb_rating:
-            rating_links.append(f"⭐ {imdb_rating}/10")
+        # IMDb/TMDb hyperlinks only
+        links = []
         if imdb_link:
-            rating_links.append(f"<a href='{imdb_link}'>⭐ IMDb</a>")
+            links.append(f"<a href='{imdb_link}'>IMDb</a>")
         if tmdb_link:
-            rating_links.append(f"<a href='{tmdb_link}'>🎭 TMDb</a>")
+            links.append(f"<a href='{tmdb_link}'>TMDb</a>")
+        if links:
+            text += " | ".join(links) + "\n"
 
-        if rating_links:
-            text += " | ".join(rating_links) + "\n"
-
+        # Robust genre handling
         if genres:
-            text += f"🎬 Genre: {', '.join(dict.fromkeys(genres))}\n"  # remove duplicates
+            if isinstance(genres, str):
+                genres = [g.strip() for g in genres.split(",") if g.strip()]
+            elif isinstance(genres, list):
+                genres = [str(g).strip() for g in genres if g]
+
+            seen = set()
+            genres_clean = []
+            for g in genres:
+                if g.lower() not in seen:
+                    seen.add(g.lower())
+                    genres_clean.append(g)
+
+            text += f"📽 Genre: {', '.join(genres_clean)}\n"
 
         # Ensure bot username exists
         if not temp.U_NAME:
@@ -296,12 +305,12 @@ async def send_msg(bot, filename, caption):
         filenames = clean_title.replace(" ", '-')
         btn = [[
             InlineKeyboardButton(
-                '🔍 Tap to Search',
+                '📁 𝖢𝗅𝗂𝖼𝗄 𝗍𝗈 𝖲𝖾𝖺𝗋𝖼𝗁',
                 url=f"https://telegram.me/{temp.U_NAME}?start=getfile-{filenames}"
             )
         ]]
 
-        # Send message
+        # Send message with poster if available
         if resized_poster:
             await bot.send_photo(
                 chat_id=MOVIE_UPDATE_CHANNEL,
@@ -316,7 +325,7 @@ async def send_msg(bot, filename, caption):
                 reply_markup=InlineKeyboardMarkup(btn)
             )
 
-        # Mark as announced (prevents duplicates next time)
+        # Mark as announced
         await mark_announced(clean_title.lower())
 
     except Exception as e:
