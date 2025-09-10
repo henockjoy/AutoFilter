@@ -216,9 +216,16 @@ async def mark_announced(title: str):
 
 async def send_msg(bot, filename, caption):
     try:
+        # -----------------------
+        # Helper function to normalize titles
+        def normalize_title(title: str) -> str:
+            title = re.sub(r"[\(\)\[\]\{\}:;'\-!.,_]+", " ", title)
+            title = re.sub(r"\s+", " ", title)
+            return title.strip().lower()
+        # -----------------------
+
         # Clean filename & caption
-        raw_filename = filename
-        filename = re.sub(r'\(\@\S+\)|\[\@\S+\]|\b@\S+|\bwww\.\S+', '', raw_filename).strip()
+        filename = re.sub(r'\(\@\S+\)|\[\@\S+\]|\b@\S+|\bwww\.\S+', '', filename).strip()
         caption = re.sub(r'\(\@\S+\)|\[\@\S+\]|\b@\S+|\bwww\.\S+', '', caption or "").strip()
 
         # Detect year
@@ -243,9 +250,10 @@ async def send_msg(bot, filename, caption):
                 clean_title = filename.split(".")[0].strip()
 
         clean_title = re.sub(r"[\(\)\[\]\{\}:;'\-!.,_]+", " ", clean_title).strip()
+        clean_title_norm = normalize_title(clean_title)
 
-        # Skip duplicate announcements
-        if await already_announced(clean_title.lower()):
+        # Skip duplicates
+        if await already_announced(clean_title_norm):
             logger.info(f"Skipping duplicate announcement for {clean_title}")
             return
 
@@ -256,48 +264,42 @@ async def send_msg(bot, filename, caption):
                 language += f"{lang}, "
         language = language.rstrip(", ") if language else "Unknown"
 
-        # IMDb/TMDb details
-        imdb_link, tmdb_link, genres, resized_poster = None, None, None, None
-
-        if await add_name(OWNERID, clean_title):
-            imdb = await get_movie_details(clean_title)
-            if imdb:
-                imdb_link = imdb.get('imdb_url')
-                tmdb_link = imdb.get('tmdb_url')
-                genres = imdb.get('genres')  # string or list
-                if imdb.get('poster_url'):
-                    resized_poster = await fetch_image(imdb['poster_url'])
-
-        # Build caption
-        text = f"<b>✅ {clean_title}</b> #{file_type}\n\n"
-        text += f"<blockquote>🎙 {language}</blockquote>\n\n"
-
-        # IMDb/TMDb hyperlinks only
-        links = []
-        if imdb_link:
-            links.append(f"<a href='{imdb_link}'>IMDb</a>")
-        if tmdb_link:
-            links.append(f"<a href='{tmdb_link}'>TMDb</a>")
-        if links:
-            text += " | ".join(links) + "\n"
-
-        # Robust genre handling
-        if genres:
+        # IMDb/TMDb and genres
+        imdb_link, tmdb_link, genres = None, None, None
+        imdb = await get_movie_details(clean_title)
+        if imdb:
+            imdb_link = imdb.get('imdb_url')
+            tmdb_link = imdb.get('tmdb_url')
+            genres = imdb.get('genres') or []
             if isinstance(genres, str):
                 genres = [g.strip() for g in genres.split(",") if g.strip()]
             elif isinstance(genres, list):
                 genres = [str(g).strip() for g in genres if g]
 
+        # Build caption
+        text = f"<b>✅ {clean_title} #{file_type}</b>\n\n"
+        text += f"<blockquote>🎙 <b>{language}</b></blockquote>\n\n"
+
+        # IMDb/TMDb hyperlinks
+        links = []
+        if imdb_link:
+            links.append(f"<b><a href='{imdb_link}'>⭐ IMDb</a></b>")
+        if tmdb_link:
+            links.append(f"<b><a href='{tmdb_link}'>🎭 TMDb</a></b>")
+        if links:
+            text += " | ".join(links) + "\n"
+
+        # Genre line
+        if genres:
             seen = set()
             genres_clean = []
             for g in genres:
                 if g.lower() not in seen:
                     seen.add(g.lower())
                     genres_clean.append(g)
+            text += f"<b>📽 Genre:</b> {', '.join(genres_clean)}\n"
 
-            text += f"📽 Genre: {', '.join(genres_clean)}\n"
-
-        # Ensure bot username exists
+        # Ensure bot username
         if not temp.U_NAME:
             logger.error("Bot username (U_NAME) not set in temp.")
             return
@@ -305,28 +307,20 @@ async def send_msg(bot, filename, caption):
         filenames = clean_title.replace(" ", '-')
         btn = [[
             InlineKeyboardButton(
-                '📁 𝖢𝗅𝗂𝖼𝗄 𝗍𝗈 𝖲𝖾𝖺𝗋𝖼𝗁',
+                '🔍 Tap to Search',
                 url=f"https://telegram.me/{temp.U_NAME}?start=getfile-{filenames}"
             )
         ]]
 
-        # Send message with poster if available
-        if resized_poster:
-            await bot.send_photo(
-                chat_id=MOVIE_UPDATE_CHANNEL,
-                photo=resized_poster,
-                caption=text,
-                reply_markup=InlineKeyboardMarkup(btn)
-            )
-        else:
-            await bot.send_message(
-                chat_id=MOVIE_UPDATE_CHANNEL,
-                text=text,
-                reply_markup=InlineKeyboardMarkup(btn)
-            )
+        # Send text message only (no poster)
+        await bot.send_message(
+            chat_id=MOVIE_UPDATE_CHANNEL,
+            text=text,
+            reply_markup=InlineKeyboardMarkup(btn)
+        )
 
         # Mark as announced
-        await mark_announced(clean_title.lower())
+        await mark_announced(clean_title_norm)
 
     except Exception as e:
         logger.error(f"Error in send_msg: {e}", exc_info=True)
