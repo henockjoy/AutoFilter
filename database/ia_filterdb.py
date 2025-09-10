@@ -216,14 +216,6 @@ async def mark_announced(title: str):
 
 async def send_msg(bot, filename, caption):
     try:
-        # -----------------------
-        # Helper function to normalize titles
-        def normalize_title(title: str) -> str:
-            title = re.sub(r"[\(\)\[\]\{\}:;'\-!.,_]+", " ", title)
-            title = re.sub(r"\s+", " ", title)
-            return title.strip().lower()
-        # -----------------------
-
         # Clean filename & caption
         filename = re.sub(r'\(\@\S+\)|\[\@\S+\]|\b@\S+|\bwww\.\S+', '', filename).strip()
         caption = re.sub(r'\(\@\S+\)|\[\@\S+\]|\b@\S+|\bwww\.\S+', '', caption or "").strip()
@@ -250,10 +242,11 @@ async def send_msg(bot, filename, caption):
                 clean_title = filename.split(".")[0].strip()
 
         clean_title = re.sub(r"[\(\)\[\]\{\}:;'\-!.,_]+", " ", clean_title).strip()
-        clean_title_norm = normalize_title(clean_title)
 
-        # Skip duplicates
-        if await already_announced(clean_title_norm):
+        # ----------------------------
+        # DUPLICATE CHECK ON CLEAN_TITLE ONLY
+        # ----------------------------
+        if await already_announced(clean_title):
             logger.info(f"Skipping duplicate announcement for {clean_title}")
             return
 
@@ -264,12 +257,10 @@ async def send_msg(bot, filename, caption):
                 language += f"{lang}, "
         language = language.rstrip(", ") if language else "Unknown"
 
-        # IMDb/TMDb and genres
-        imdb_link, tmdb_link, genres = None, None, None
+        # Genres
+        genres = []
         imdb = await get_movie_details(clean_title)
         if imdb:
-            imdb_link = imdb.get('imdb_url')
-            tmdb_link = imdb.get('tmdb_url')
             genres = imdb.get('genres') or []
             if isinstance(genres, str):
                 genres = [g.strip() for g in genres.split(",") if g.strip()]
@@ -280,15 +271,6 @@ async def send_msg(bot, filename, caption):
         text = f"<b>✅ {clean_title} #{file_type}</b>\n\n"
         text += f"<blockquote>🎙 <b>{language}</b></blockquote>\n\n"
 
-        # IMDb/TMDb hyperlinks
-        links = []
-        if imdb_link:
-            links.append(f"<b><a href='{imdb_link}'>⭐ IMDb</a></b>")
-        if tmdb_link:
-            links.append(f"<b><a href='{tmdb_link}'>🎭 TMDb</a></b>")
-        if links:
-            text += " | ".join(links) + "\n"
-
         # Genre line
         if genres:
             seen = set()
@@ -297,7 +279,7 @@ async def send_msg(bot, filename, caption):
                 if g.lower() not in seen:
                     seen.add(g.lower())
                     genres_clean.append(g)
-            text += f"<b>📽 Genre:</b> {', '.join(genres_clean)}\n"
+            text += f"📽 Genre: {', '.join(genres_clean)}\n"
 
         # Ensure bot username
         if not temp.U_NAME:
@@ -307,7 +289,7 @@ async def send_msg(bot, filename, caption):
         filenames = clean_title.replace(" ", '-')
         btn = [[
             InlineKeyboardButton(
-                '🔍 Tap to Search',
+                '📁 𝖢𝗅𝗂𝖼𝗄 𝗍𝗈 𝖲𝖾𝖺𝗋𝖼𝗁',
                 url=f"https://telegram.me/{temp.U_NAME}?start=getfile-{filenames}"
             )
         ]]
@@ -319,8 +301,8 @@ async def send_msg(bot, filename, caption):
             reply_markup=InlineKeyboardMarkup(btn)
         )
 
-        # Mark as announced
-        await mark_announced(clean_title_norm)
+        # MARK AS ANNOUNCED
+        await mark_announced(clean_title)
 
     except Exception as e:
         logger.error(f"Error in send_msg: {e}", exc_info=True)
