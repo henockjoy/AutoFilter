@@ -203,57 +203,86 @@ def unpack_new_file_id(new_file_id):
     return file_id, file_ref
 
 
-async def send_msg(bot, filename, caption): 
+async def send_msg(bot, filename, caption):
     try:
+        # Clean inputs
         filename = re.sub(r'\(\@\S+\)|\[\@\S+\]|\b@\S+|\bwww\.\S+', '', filename).strip()
-        caption = re.sub(r'\(\@\S+\)|\[\@\S+\]|\b@\S+|\bwww\.\S+', '', caption).strip()
-        
-        year_match = re.search(r"\b(19|20)\d{2}\b", caption)
-        year = year_match.group(0) if year_match else None
+        caption = re.sub(r'\(\@\S+\)|\[\@\S+\]|\b@\S+|\bwww\.\S+', '', caption or "").strip()
 
-        pattern = r"(?i)(?:s|season)0*(\d{1,2})"
-        season = re.search(pattern, caption) or re.search(pattern, filename)
-        season = season.group(1) if season else None 
+        # Detect TV Series / Movie
+        season_match = re.search(r"(S\d{1,2}E\d{1,2}|Season\s?\d+|Episode\s?\d+)", caption, re.I) \
+                       or re.search(r"(S\d{1,2}E\d{1,2}|Season\s?\d+|Episode\s?\d+)", filename, re.I)
+        file_type = "𝖳𝖵𝖲𝖤𝖱𝖨𝖤𝖲" if season_match else "𝖬𝖮𝖵𝖨𝖤"
 
-        if year:
-            filename = filename[: filename.find(year) + 4]  
-        elif season and season in filename:
-            filename = filename[: filename.find(season) + 1]
-
-        qualities = ["ORG", "org", "hdcam", "HDCAM", "HQ", "hq", "HDRip", "hdrip", "camrip", "CAMRip", "hdtc", "predvd", "DVDscr", "dvdscr", "dvdrip", "dvdscr", "HDTC", "dvdscreen", "HDTS", "hdts"]
-        quality = await get_qualities(caption.lower(), qualities) or "HDRip"
-
+        # Detect languages
         language = ""
-        possible_languages = CAPTION_LANGUAGES
-        for lang in possible_languages:
+        for lang in CAPTION_LANGUAGES:
             if lang.lower() in caption.lower():
                 language += f"{lang}, "
-        language = language[:-2] if language else "Not idea 😄"
+        language = language.rstrip(", ") if language else "Unknown"
 
-        filename = re.sub(r"[\(\)\[\]\{\}:;'\-!]", "", filename)
-
-        text = "#𝑵𝒆𝒘_𝑭𝒊𝒍𝒆_𝑨𝒅𝒅𝒆𝒅 ✅\n\n👷𝑵𝒂𝒎𝒆: `{}`\n\n🌳𝑸𝒖𝒂𝒍𝒊𝒕𝒚: {}\n\n🍁𝑨𝒖𝒅𝒊𝒐: {}"
-        text = text.format(filename, quality, language)
+        # Links & details
+        imdb_link, tmdb_link, genres, imdb_rating = None, None, None, None
+        resized_poster = None
 
         if await add_name(OWNERID, filename):
-            imdb = await get_movie_details(filename)  
-            resized_poster = None
-
+            imdb = await get_movie_details(filename)
             if imdb:
-                poster_url = imdb.get('poster_url')
-                if poster_url:
-                    resized_poster = await fetch_image(poster_url)  
+                imdb_link = imdb.get('imdb_url')
+                tmdb_link = imdb.get('tmdb_url')
+                genres = imdb.get('genres')
+                imdb_rating = imdb.get('rating')  # e.g. "8.7"
+                if imdb.get('poster_url'):
+                    resized_poster = await fetch_image(imdb['poster_url'])
 
-            filenames = filename.replace(" ", '-')
-            btn = [[InlineKeyboardButton('🌲 Get Files 🌲', url=f"https://telegram.me/{temp.U_NAME}?start=getfile-{filenames}")]]
-            
-            if resized_poster:
-                await bot.send_photo(chat_id=MOVIE_UPDATE_CHANNEL, photo=resized_poster, caption=text, reply_markup=InlineKeyboardMarkup(btn))
-            else:              
-                await bot.send_message(chat_id=MOVIE_UPDATE_CHANNEL, text=text, reply_markup=InlineKeyboardMarkup(btn))
+        # Build styled caption
+        text = f"✅<b>{filename} #{file_type}</b>\n\n"
+        text += f"<blockquote>🎙 {language}</blockquote>\n\n"
 
-    except:
-        pass
+        rating_links = []
+        if imdb_rating:
+            rating_links.append(f"⭐ {imdb_rating}/10")
+        if imdb_link:
+            rating_links.append(f"<a href='{imdb_link}'>⭐ IMDb</a>")
+        if tmdb_link:
+            rating_links.append(f"<a href='{tmdb_link}'>🎭 TMDb</a>")
+
+        if rating_links:
+            text += " | ".join(rating_links) + "\n"
+
+        if genres:
+            text += f"🎬 Genre: {', '.join(genres)}\n"
+
+        # Ensure bot username exists
+        if not temp.U_NAME:
+            logger.error("Bot username (U_NAME) not set in temp.")
+            return
+
+        filenames = filename.replace(" ", '-')
+        btn = [[
+            InlineKeyboardButton(
+                '📁 𝖢𝗅𝗂𝖼𝗄 𝗍𝗈 𝖲𝖾𝖺𝗋𝖼𝗁',
+                url=f"https://telegram.me/{temp.U_NAME}?start=getfile-{filenames}"
+            )
+        ]]
+
+        # Send message
+        if resized_poster:
+            await bot.send_photo(
+                chat_id=MOVIE_UPDATE_CHANNEL,
+                photo=resized_poster,
+                caption=text,
+                reply_markup=InlineKeyboardMarkup(btn)
+            )
+        else:
+            await bot.send_message(
+                chat_id=MOVIE_UPDATE_CHANNEL,
+                text=text,
+                reply_markup=InlineKeyboardMarkup(btn)
+            )
+
+    except Exception as e:
+        logger.error(f"Error in send_msg: {e}", exc_info=True)
 
 async def get_qualities(text, qualities: list):
     """Get all Quality from text"""
