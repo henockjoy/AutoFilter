@@ -100,9 +100,9 @@ async def give_filter(client, message):
         search = message.text
         temp_files, temp_offset, total_results = await get_search_results(chat_id=message.chat.id, query=search.lower(), offset=0, filter=True)
         if total_results == 0:
-            return await message.reply_text(f"<b>👋 𝖧𝖾𝗒 {message.from_user.mention}, 𝗌𝗈𝗋𝗋𝗒 😕\n\n𝖨 𝖼𝗈𝗎𝗅𝖽𝗇'𝗍 𝖿𝗂𝗇𝖽 𝖺𝗇𝗒 𝖿𝗂𝗅𝖾𝗌 𝗆𝖺𝗍𝖼𝗁𝗂𝗇𝗀 𝗒𝗈𝗎𝗋 𝗌𝖾𝖺𝗋𝖼𝗁 🔍 <code>{search}</code>.\n<blockquote>📌 𝖳𝗂𝗉: 𝖣𝗈𝗎𝖻𝗅𝖾-𝖼𝗁𝖾𝖼𝗄 𝗍𝗁𝖾 𝗌𝗉𝖾𝗅𝗅𝗂𝗇𝗀 𝖺𝗇𝖽 𝗆𝖺𝗄𝖾 𝗌𝗎𝗋𝖾 𝗂𝗍'𝗌 𝗋𝖾𝗅𝖾𝖺𝗌𝖾𝖽 𝗈𝗇 𝖮𝖳𝖳 🎬</blockquote>", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("ᴊᴏɪɴ ᴀɴᴅ ꜱᴇᴀʀᴄʜ ʜᴇʀᴇ", url=GRP_LNK)]]))
+            return await message.reply_text(f"<b>👋 𝖧𝖾𝗒 {message.from_user.mention}, 𝗌𝗈𝗋𝗋𝗒 😕</b>\n\n𝖨 𝖼𝗈𝗎𝗅𝖽𝗇'𝗍 𝖿𝗂𝗇𝖽 𝖺𝗇𝗒 𝖿𝗂𝗅𝖾𝗌 𝗆𝖺𝗍𝖼𝗁𝗂𝗇𝗀 𝗒𝗈𝗎𝗋 𝗌𝖾𝖺𝗋𝖼𝗁 🔍 <b>{search}</b>.\n<blockquote>📌 𝖳𝗂𝗉: 𝖣𝗈𝗎𝖻𝗅𝖾-𝖼𝗁𝖾𝖼𝗄 𝗍𝗁𝖾 𝗌𝗉𝖾𝗅𝗅𝗂𝗇𝗀 𝖺𝗇𝖽 𝗆𝖺𝗄𝖾 𝗌𝗎𝗋𝖾 𝗂𝗍'𝗌 𝗋𝖾𝗅𝖾𝖺𝗌𝖾𝖽 𝗈𝗇 𝖮𝖳𝖳 🎬</blockquote>",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("ᴊᴏɪɴ ᴀɴᴅ ꜱᴇᴀʀᴄʜ ʜᴇʀᴇ", url=GRP_LNK)]]))
         else:
-            return await message.reply_text(f"<b>👋 𝖧𝖾𝗒 {message.from_user.mention}, 𝗀𝗋𝖾𝖺𝗍 𝗇𝖾𝗐𝗌! ✅</b>\n\n𝖶𝖾 𝖺𝗅𝗋𝖾𝖺𝖽𝗒 𝗁𝖺𝗏𝖾 <code>{str(total_results)}</code> 📀𝖿𝗂𝗅𝖾𝗌 𝗆𝖺𝗍𝖼𝗁𝗂𝗇𝗀 𝗒𝗈𝗎𝗋 𝗌𝖾𝖺𝗋𝖼𝗁 🔍 <code>{search}.</code> \n𝖲𝗂𝗇𝖼𝖾 𝗍𝗁𝗂𝗌 𝗂𝗌 𝖺 💬 𝗌𝗎𝗉𝗉𝗈𝗋𝗍 𝗀𝗋𝗈𝗎𝗉, 𝗒𝗈𝗎 𝖼𝖺𝗇𝗍'𝗍 𝗀𝗋𝖺𝖻 𝖿𝗂𝗅𝖾𝗌 𝗁𝖾𝗋𝖾 - 𝖻𝗎𝗍 𝖽𝗈𝗇𝗍'𝗍 𝗐𝗈𝗋𝗋𝗒, 𝗃𝗎𝗌𝗍 𝖼𝗁𝖾𝖼𝗄 𝖻𝖾𝗅𝗈𝗐 🎬⬇️\n<blockquote>✨ 𝖧𝖺𝗉𝗉𝗒 𝗐𝖺𝗍𝖼𝗁𝗂𝗇𝗀 🍿🥤</blockquote>", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("ᴊᴏɪɴ ᴀɴᴅ ꜱᴇᴀʀᴄʜ ʜᴇʀᴇ", url=GRP_LNK)]]))
+            return await message.reply_text(f"<b>👋 𝖧𝖾𝗒 {message.from_user.mention}, 𝗀𝗋𝖾𝖺𝗍 𝗇𝖾𝗐𝗌! ✅</b>\n\n𝖶𝖾 𝖺𝗅𝗋𝖾𝖺𝖽𝗒 𝗁𝖺𝗏𝖾 <b>{str(total_results)}</b> 📀𝖿𝗂𝗅𝖾𝗌 𝗆𝖺𝗍𝖼𝗁𝗂𝗇𝗀 𝗒𝗈𝗎𝗋 𝗌𝖾𝖺𝗋𝖼𝗁 🔍 <b>{search}.</b>\n\n𝖲𝗂𝗇𝖼𝖾 𝗍𝗁𝗂𝗌 𝗂𝗌 𝖺 💬 𝗌𝗎𝗉𝗉𝗈𝗋𝗍 𝗀𝗋𝗈𝗎𝗉, 𝗒𝗈𝗎 𝖼𝖺𝗇𝗍'𝗍 𝗀𝗋𝖺𝖻 𝖿𝗂𝗅𝖾𝗌 𝗁𝖾𝗋𝖾 - 𝖻𝗎𝗍 𝖽𝗈𝗇𝗍'𝗍 𝗐𝗈𝗋𝗋𝗒, 𝗃𝗎𝗌𝗍 𝖼𝗁𝖾𝖼𝗄 𝖻𝖾𝗅𝗈𝗐 🎬⬇️\n<blockquote>✨ 𝖧𝖺𝗉𝗉𝗒 𝗐𝖺𝗍𝖼𝗁𝗂𝗇𝗀 🍿🥤</blockquote>",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("ᴊᴏɪɴ ᴀɴᴅ ꜱᴇᴀʀᴄʜ ʜᴇʀᴇ", url=GRP_LNK)]]))
 
 @Client.on_message(filters.private & filters.text & filters.incoming)
 async def pm_text(bot, message):
