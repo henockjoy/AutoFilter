@@ -99,6 +99,7 @@ IS_TUTORIAL = bool(environ.get('IS_TUTORIAL', False))
 # Channel & Group Links Configuration
 # ============================
 GRP_LNK = environ.get('GRP_LNK', 'https://t.me/FT_Chatz')
+GRPP_LNK = environ.get('GRP_LNK', 'https://t.me/Teamyoonseri')
 CHNL_LNK = environ.get('CHNL_LNK', 'https://t.me/FT_Channels')
 OWNER_LNK = environ.get('OWNER_LNK', 'https://t.me/FTAdminbot')
 MOVIE_UPDATE_CHANNEL_LNK = environ.get('MOVIE_UPDATE_CHANNEL_LNK', 'https://t.me/+rqusB8WS_14xZTU1')
