@@ -264,16 +264,14 @@ Nᴀᴍᴇ : {}
 
 Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
     
-    CAPTION = """<blockquote><b>{file_name}</b>\n\n<code>{file_caption}</code></blockquote>\n<i>ᴘʟᴇᴀsᴇ ꜰᴏʀᴡᴀʀᴅ ᴛʜɪs ꜰɪʟᴇs ᴛᴏ ᴛʜᴇ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇ ᴀɴᴅ ᴄʟᴏsᴇ ᴛʜɪs ᴍᴇssᴀɢᴇ</i>"""
+    CAPTION = """<blockquote><b>{file_name}</b>\n\n<code>{file_caption}</code></blockquote>\n<i>ᴘʟᴇᴀsᴇ ꜰᴏʀᴡᴀʀᴅ ᴛʜɪs ꜰɪʟᴇs ᴛᴏ ᴛʜᴇ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇ</i>"""
 
-    IMDB_TEMPLATE_TXT = """<u><b>{title} {year}</b></u>
+    IMDB_TEMPLATE_TXT = """<u><b>{title}</b></u>
     
+‣ 𝖸𝖾𝖺𝗋: {year}    
 ‣ 𝖦𝖾𝗇𝗋𝖾𝗌: {genres}
-‣ 𝖱𝖺𝗍𝗂𝗇𝗀: {rating}
-‣ 𝖱𝗎𝗇𝖳𝗂𝗆𝖾: {runtime} 𝗆𝗂𝗇𝗎𝗍𝖾𝗌
-‣ 𝖠𝖼𝗍𝗈𝗋𝗌: {cast}
-‣ 𝖣𝗂𝗋𝖾𝖼𝗍𝗈𝗋: {director}
-‣ R͏e͏s͏u͏l͏t͏ i͏n͏: {remaining_seconds} <i>seconds</i>
+‣ R͏e͏s͏u͏l͏t͏ i͏n͏: {remaining_seconds} 𝗌𝖾𝖼𝗈𝗇𝖽𝗌
+‣ 𝖱𝖾𝗊𝗎𝖾𝗌𝗍𝖾𝖽 𝖻𝗒: {message.from_user.mention}
 
 ‣ 𝖯𝗅𝗈𝗍: {plot}‌"""
     
