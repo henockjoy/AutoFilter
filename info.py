@@ -31,9 +31,9 @@ USE_CAPTION_FILTER = bool(environ.get('USE_CAPTION_FILTER', True))
 PICS = (environ.get('PICS', 'https://graph.org/file/288c0474120109abe06e8-abcd91178c24aae954.jpg https://graph.org/file/31647c854c76a2b73a54e-10c911dd1cf4795f4e.jpg https://graph.org/file/196912fbfb52e2876bfc6-750b13863867e44f25.jpg https://graph.org/file/619a0226a5f922bf5784d-2b053b8a15e849dc06.jpg https://graph.org/file/d3bb86bec43ed5c10fe31-7cb95f8b834bd9442e.jpg')).split()  # Sample pic
 NOR_IMG = environ.get("NOR_IMG", "https://envs.sh/Wdj.jpg")
 MELCOW_VID = environ.get("MELCOW_VID", "https://graph.org/file/196912fbfb52e2876bfc6-750b13863867e44f25.jpg")
-SPELL_IMG = environ.get("SPELL_IMG", "https://envs.sh/Wdj.jpg")
+SPELL_IMG = environ.get("SPELL_IMG", "https://graph.org/file/4806612754673005670be-17fa7bf20cd5aaebaa.png")
 SUBSCRIPTION = (environ.get('SUBSCRIPTION', 'https://envs.sh/Wdj.jpg'))
-FSUB_PICS = (environ.get('FSUB_PICS', 'https://envs.sh/Wdj.jpg')).split()  # Fsub pic
+FSUB_PICS = (environ.get('FSUB_PICS', 'https://graph.org/file/086ee7e2f4396dc0d791c-b28b45b76f01510c6c.jpg')).split()  # Fsub pic
 
 # ============================
 # Admin, Channels & Users Configuration
@@ -49,7 +49,7 @@ DELETE_CHANNELS = [int(dch) if id_pattern.search(dch) else dch for dch in enviro
 support_chat_id = environ.get('SUPPORT_CHAT_ID', '-1001771340892')  # Support group id (make sure bot is admin)
 reqst_channel = environ.get('REQST_CHANNEL_ID', '-1001863319697')  # Request channel id (make sure bot is admin)
 AUTH_CHANNEL = [int(fch) if id_pattern.search(fch) else fch for fch in environ.get('AUTH_CHANNEL', '-1001263870486').split()]
-MULTI_FSUB = [int(channel_id) for channel_id in environ.get('MULTI_FSUB', '-1001263870486 -1001676969765').split() if re.match(r'^-?\d+$', channel_id)]  # Channel for force sub (make sure bot is admin)
+MULTI_FSUB = [int(channel_id) for channel_id in environ.get('MULTI_FSUB', '-1001263870486 -1002429568959').split() if re.match(r'^-?\d+$', channel_id)]  # Channel for force sub (make sure bot is admin)
 
 
 # ============================
