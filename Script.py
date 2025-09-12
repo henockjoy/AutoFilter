@@ -270,7 +270,7 @@ Mᴇꜱꜱᴀɢᴇ : <b>{}</b>"""
     
 ‣ 𝖸𝖾𝖺𝗋: {year}    
 ‣ 𝖦𝖾𝗇𝗋𝖾𝗌: {genres}
-‣ R͏e͏s͏u͏l͏t͏ i͏n͏: {remaining_seconds} 𝗌𝖾𝖼𝗈𝗇𝖽𝗌
+‣ 𝖱𝖾𝗌𝗎𝗅𝗍 𝗂𝗇: {remaining_seconds} 𝗌𝖾𝖼𝗈𝗇𝖽𝗌
 ‣ 𝖱𝖾𝗊𝗎𝖾𝗌𝗍𝖾𝖽 𝖻𝗒: {message.from_user.mention}
 
 ‣ 𝖯𝗅𝗈𝗍: {plot}‌"""
