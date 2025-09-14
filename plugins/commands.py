@@ -1019,12 +1019,12 @@ KEYWORDS = ["#request", "/request", "#Request", "/Request"]
 # Admin options buttons
 def make_option_buttons(user_id):
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton('Unavailable', callback_data=f'option#unavailable#{user_id}'),
-         InlineKeyboardButton('Uploaded', callback_data=f'option#uploaded#{user_id}')],
-        [InlineKeyboardButton('Already Available', callback_data=f'option#already#{user_id}'),
-         InlineKeyboardButton('Not Released', callback_data=f'option#notreleased#{user_id}')],
-        [InlineKeyboardButton('Spelling', callback_data=f'option#typo#{user_id}'),
-         InlineKeyboardButton('Language', callback_data=f'option#lang#{user_id}')]
+        [InlineKeyboardButton('❌ Unavailable', callback_data=f'option#unavailable#{user_id}'),
+         InlineKeyboardButton('🎉 Uploaded', callback_data=f'option#uploaded#{user_id}')],
+        [InlineKeyboardButton('ℹ️ Already Available', callback_data=f'option#already#{user_id}'),
+         InlineKeyboardButton('📺 Not Released', callback_data=f'option#notreleased#{user_id}')],
+        [InlineKeyboardButton('✏️ Spelling', callback_data=f'option#typo#{user_id}'),
+         InlineKeyboardButton('🌐 Language', callback_data=f'option#lang#{user_id}')]
     ])
 
 
@@ -1137,7 +1137,7 @@ async def callback_handler(bot, callback_query):
 
         # Show only selected status as disabled button
         selected_button = InlineKeyboardMarkup([
-            [InlineKeyboardButton(f"Status: {status.replace('_',' ').title()}", callback_data="disabled")]
+            [InlineKeyboardButton(f"{status.replace('_',' ').title()}", callback_data="disabled")]
         ])
         await callback_query.message.edit_reply_markup(selected_button)
 
