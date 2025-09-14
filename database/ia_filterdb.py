@@ -153,7 +153,6 @@ async def get_bad_files(query, file_type=None, filter=False):
         filter['file_type'] = file_type
 
     cursor = Media.find(filter)
-    cursor = Media.find(filter)
     cursor.sort('$natural', -1)
 
     files = await cursor.to_list(length=(await Media.count_documents(filter)))
@@ -201,9 +200,9 @@ def unpack_new_file_id(new_file_id):
     )
     file_ref = encode_file_ref(decoded.file_reference)
     return file_id, file_ref
-
-
-# New Announced collection
+# ------------------------------
+# Duplicate Check
+# ------------------------------
 announced_collection = db["Announced"]
 
 async def already_announced(title: str) -> bool:
@@ -214,17 +213,19 @@ async def mark_announced(title: str):
     await announced_collection.insert_one({"title": title})
 
 
-async def send_msg(bot, filename, caption):
+# ------------------------------
+# Announce New File
+# ------------------------------
+async def send_msg(bot, filename, caption=""):
     try:
-        # Clean filename & caption
+        # --- Clean filename ---
         filename = re.sub(r'\(\@\S+\)|\[\@\S+\]|\b@\S+|\bwww\.\S+', '', filename).strip()
-        caption = re.sub(r'\(\@\S+\)|\[\@\S+\]|\b@\S+|\bwww\.\S+', '', caption or "").strip()
 
         # Detect year
         year_match = re.search(r"\b(19|20)\d{2}\b", filename)
         year = year_match.group(0) if year_match else None
 
-        # Detect series (Season/Episode)
+        # Detect Season/Episode
         season_match = re.search(r"(S\d{1,2})", filename, re.I)
         episode_match = re.search(r"(E\d{1,2})", filename, re.I)
 
@@ -242,70 +243,60 @@ async def send_msg(bot, filename, caption):
                 clean_title = filename.split(".")[0].strip()
 
         clean_title = re.sub(r"[\(\)\[\]\{\}:;'\-!.,_]+", " ", clean_title).strip()
+        normalized_title = clean_title.lower().strip()
 
-        # ----------------------------
-        # DUPLICATE CHECK ON CLEAN_TITLE ONLY
-        # ----------------------------
-        if await already_announced(clean_title):
+        # --- Duplicate check ---
+        if await already_announced(normalized_title):
             logger.info(f"Skipping duplicate announcement for {clean_title}")
             return
 
-        # Detect languages
-        language = ""
-        for lang in CAPTION_LANGUAGES:
-            if lang.lower() in caption.lower():
-                language += f"{lang}, "
-        language = language.rstrip(", ") if language else "Unknown"
+        # --- Get IMDb + Trailer details (already implemented elsewhere) ---
+        details = await get_movie_details(clean_title)  # returns dict with imdb_url, rating, genres, trailer_url
+        imdb_url = details.get("imdb_url") if details else None
+        imdb_rating = details.get("rating") if details else None
+        genres = details.get("genres") if details else []
+        trailer_url = details.get("trailer_url") if details else None
+
+        # --- Build caption ---
+        text = f"✅ {clean_title} #{file_type}\n\n"
+        if caption:
+            text += caption + "\n"
+
+        # Ratings
+        rating_links = []
+        if imdb_rating:
+            rating_links.append(f"⭐ {imdb_rating}/10")
+        if imdb_url:
+            rating_links.append(f"<a href='{imdb_url}'>⭐ IMDb</a>")
+        if rating_links:
+            text += " | ".join(rating_links) + "\n"
 
         # Genres
-        genres = []
-        imdb = await get_movie_details(clean_title)
-        if imdb:
-            genres = imdb.get('genres') or []
-            if isinstance(genres, str):
-                genres = [g.strip() for g in genres.split(",") if g.strip()]
-            elif isinstance(genres, list):
-                genres = [str(g).strip() for g in genres if g]
-
-        # Build caption
-        text = f"<b>✅ {clean_title} #{file_type}</b>\n\n"
-        text += f"<blockquote>🎙 <b>{language}</b></blockquote>\n\n"
-
-        # Genre line
         if genres:
-            seen = set()
-            genres_clean = []
-            for g in genres:
-                if g.lower() not in seen:
-                    seen.add(g.lower())
-                    genres_clean.append(g)
-            text += f"📽 Genre: {', '.join(genres_clean)}\n"
+            text += "📽 " + ", ".join(genres[:2]) + "\n"  # max 2 genres
 
-        # Ensure bot username
-        if not temp.U_NAME:
-            logger.error("Bot username (U_NAME) not set in temp.")
-            return
+        # --- Buttons ---
+        btn = []
+        if trailer_url:
+            btn.append([InlineKeyboardButton("▶️ 𝖶𝖺𝗍𝖼𝗁 𝖳𝗋𝖺𝗂𝗅𝖾𝗋", url=trailer_url)])
+        btn.append([InlineKeyboardButton(
+            '📁 𝖢𝗅𝗂𝖼𝗄 𝗍𝗈 𝗌𝖾𝖺𝗋𝖼𝗁',
+            url=f"https://telegram.me/{temp.U_NAME}?start=getfile-{clean_title.replace(' ', '-')}"
+        )])
 
-        filenames = clean_title.replace(" ", '-')
-        btn = [[
-            InlineKeyboardButton(
-                '📁 𝖢𝗅𝗂𝖼𝗄 𝗍𝗈 𝖲𝖾𝖺𝗋𝖼𝗁',
-                url=f"https://telegram.me/{temp.U_NAME}?start=getfile-{filenames}"
-            )
-        ]]
-
-        # Send text message only (no poster)
+        # --- Send message ---
         await bot.send_message(
             chat_id=MOVIE_UPDATE_CHANNEL,
             text=text,
             reply_markup=InlineKeyboardMarkup(btn)
         )
 
-        # MARK AS ANNOUNCED
-        await mark_announced(clean_title)
+        # --- Mark as announced ---
+        await mark_announced(normalized_title)
 
     except Exception as e:
         logger.error(f"Error in send_msg: {e}", exc_info=True)
+
 
 async def get_qualities(text, qualities: list):
     """Get all Quality from text"""
