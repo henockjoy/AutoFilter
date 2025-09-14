@@ -1081,13 +1081,13 @@ async def requests_handler(bot, message):
         await bot.send_message(
             chat_id=SUPPORT_CHAT_ID,
             text=(
+                f"Hi {mention}!!</b>\n\n"
                 "✅ 𝗬𝗢𝗨𝗥 𝗥𝗘𝗤𝗨𝗘𝗦𝗧 𝗛𝗔𝗦 𝗕𝗘𝗘𝗡 𝗔𝗗𝗗𝗘𝗗!\n"
                 "⏳ 𝗣𝗟𝗘𝗔𝗦𝗘 𝗪𝗔𝗜𝗧 𝗙𝗢𝗥 𝗦𝗢𝗠𝗘 𝗧𝗜𝗠𝗘.\n\n"
                 "📢 𝗝𝗢𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟 𝗙𝗜𝗥𝗦𝗧 & 𝗩𝗜𝗘𝗪 𝗥𝗘𝗤𝗨𝗘𝗦𝗧."
             ),
             reply_markup=support_btn,
             disable_web_page_preview=True,
-            reply_to_message_id=message.message_id
         )
 
     except Exception as e:
