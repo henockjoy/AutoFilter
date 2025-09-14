@@ -1012,15 +1012,9 @@ async def save_template(client, message):
     await save_group_settings(grp_id, 'template', template)
     await sts.edit(f"✅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ᴄʜᴀɴɢᴇᴅ ᴛᴇᴍᴘʟᴀᴛᴇ ꜰᴏʀ <code>{title}</code> ᴛᴏ\n\n{template}")
 
-# Store requests to map with user_id for callback
-REQUESTS = {}
+REQUESTS = {}  # Store user requests for callback
+KEYWORDS = ["#request", "/request", "#Request", "/Request"]
 
-# Initial buttons: view + options
-def make_initial_buttons(message_link, user_id):
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton('👁️ View Request', url=message_link)],
-        [InlineKeyboardButton('⚙️ Options', callback_data=f'show_option#{user_id}')]
-    ])
 
 # Admin options buttons
 def make_option_buttons(user_id):
@@ -1028,16 +1022,16 @@ def make_option_buttons(user_id):
         [InlineKeyboardButton('Unavailable', callback_data=f'option#unavailable#{user_id}'),
          InlineKeyboardButton('Uploaded', callback_data=f'option#uploaded#{user_id}')],
         [InlineKeyboardButton('Already Available', callback_data=f'option#already#{user_id}'),
-         InlineKeyboardButton('Not Released on OTT', callback_data=f'option#notreleased#{user_id}')],
-        [InlineKeyboardButton('Typo / Correcting Spelling', callback_data=f'option#typo#{user_id}'),
-         InlineKeyboardButton('Requested Language Not Available', callback_data=f'option#lang#{user_id}')]
+         InlineKeyboardButton('Not Released', callback_data=f'option#notreleased#{user_id}')],
+        [InlineKeyboardButton('Spelling', callback_data=f'option#typo#{user_id}'),
+         InlineKeyboardButton('Language', callback_data=f'option#lang#{user_id}')]
     ])
 
-# Keywords for requests
-KEYWORDS = ["#request", "/request", "#Request", "/Request"]
 
 # /request handler
-@Client.on_message((filters.command(["request", "Request"]) | filters.regex("#request") | filters.regex("#Request")) & filters.group)
+@Client.on_message(
+    (filters.command(["request", "Request"]) | filters.regex("#request") | filters.regex("#Request")) & filters.group
+)
 async def requests_handler(bot, message):
     if REQST_CHANNEL is None or SUPPORT_CHAT_ID is None:
         return
@@ -1045,11 +1039,10 @@ async def requests_handler(bot, message):
     user_id = message.from_user.id
     mention = message.from_user.mention
 
-    # Get content: either reply text or message text
-    if message.reply_to_message:
-        content = message.reply_to_message.text or ""
-    else:
-        content = message.text or ""
+    # Get content: reply or message text
+    content = message.reply_to_message.text if message.reply_to_message else message.text
+    if not content:
+        return
 
     # Remove keywords
     for kw in KEYWORDS:
@@ -1063,31 +1056,38 @@ async def requests_handler(bot, message):
     REQUESTS[user_id] = content
 
     try:
-        # Send request to request channel
-        btn = make_initial_buttons(message.link, user_id)
+        # Send request log to request channel
         reported_post = await bot.send_message(
             chat_id=REQST_CHANNEL,
-            text=f"📝 Request: <u>{content}</u>\n📚 Reported by: {mention}\n📖 Reporter ID: {user_id}",
-            reply_markup=btn
+            text=(
+                "📝 <b>𝓡𝓮𝓺𝓾𝓮𝓼𝓽:</b> <u>{content}</u>\n\n"
+                "👤 <b>ℜ𝔢𝔭𝔬𝔯𝔱𝔢𝔯:</b> {mention}\n"
+                "💠 <b>𝕀𝔻:</b> <code>{user_id}</code>"
+            ).format(content=content, mention=mention, user_id=user_id),
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("👁️ VIEW REQUEST", url=message.link)],
+                [InlineKeyboardButton("⚙️ SHOW OPTIONS", callback_data=f"show_option#{user_id}")]
+            ])
         )
 
-        # Confirmation to the user
-        try:
-            confirm_btn = InlineKeyboardMarkup([
-                [InlineKeyboardButton('📢 Join Channel', url="https://t.me/YOUR_CHANNEL_USERNAME")],
-                [InlineKeyboardButton('👁️ View Request', url=reported_post.link)]
-            ])
-            await bot.send_message(
-                chat_id=user_id,
-                text=f"✅ Your request for '{content}' has been added. Please wait for some time.\n\nJoin the channel first & view the request.",
-                reply_markup=confirm_btn
-            )
-        except:
-            # User blocked bot → fallback to request channel
-            await bot.send_message(
-                chat_id=REQST_CHANNEL,
-                text=f"⚠️ Could not notify {mention}. User may have blocked the bot."
-            )
+        # Create dynamic invite link for REQST_CHANNEL
+        invite_link = await bot.create_chat_invite_link(int(REQST_CHANNEL))
+
+        # Send confirmation to support chat (user-facing)
+        support_btn = InlineKeyboardMarkup([
+            [InlineKeyboardButton('📢 JOIN CHANNEL', url=invite_link.invite_link)],
+            [InlineKeyboardButton('👁️ VIEW REQUEST', url=reported_post.link)]
+        ])
+        await bot.send_message(
+            chat_id=SUPPORT_CHAT_ID,
+            text=(
+                "✅ 𝗬𝗢𝗨𝗥 𝗥𝗘𝗤𝗨𝗘𝗦𝗧 𝗛𝗔𝗦 𝗕𝗘𝗘𝗡 𝗔𝗗𝗗𝗘𝗗!\n"
+                "⏳ 𝗣𝗟𝗘𝗔𝗦𝗘 𝗪𝗔𝗜𝗧 𝗙𝗢𝗥 𝗦𝗢𝗠𝗘 𝗧𝗜𝗠𝗘.\n\n"
+                "📢 𝗝𝗢𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟 𝗙𝗜𝗥𝗦𝗧 & 𝗩𝗜𝗘𝗪 𝗥𝗘𝗤𝗨𝗘𝗦𝗧."
+            ),
+            reply_markup=support_btn,
+            disable_web_page_preview=True
+        )
 
     except Exception as e:
         await message.reply_text(f"Error sending request: {e}")
@@ -1097,38 +1097,44 @@ async def requests_handler(bot, message):
 @Client.on_callback_query()
 async def callback_handler(bot, callback_query):
     data = callback_query.data
+    clicker_id = callback_query.from_user.id  # who clicked
+
+    # Restrict "show_option" and "option" to admins only
+    if (data.startswith("show_option#") or data.startswith("option#")) and clicker_id not in ADMINS:
+        await callback_query.answer("⚠️ You are not authorized to use this option.", show_alert=True)
+        return
 
     if data.startswith("show_option#"):
-        user_id = int(data.split("#")[1])
-        await callback_query.message.edit_reply_markup(make_option_buttons(user_id))
+        req_user_id = int(data.split("#")[1])
+        await callback_query.message.edit_reply_markup(make_option_buttons(req_user_id))
 
     elif data.startswith("option#"):
         parts = data.split("#")
         status = parts[1]
-        user_id = int(parts[2])
+        req_user_id = int(parts[2])
 
         status_messages = {
-            "unavailable": "❌ Your request for '{query}' is currently unavailable.",
-            "uploaded": "🎉 Your request for '{query}' has been uploaded.",
-            "already": "ℹ️ Your request for '{query}' is already available.",
-            "notreleased": "📺 Your request for '{query}' is not released on OTT.",
-            "typo": "✏️ Your request for '{query}' has a spelling correction.",
-            "lang": "🌐 Requested language for '{query}' is not available."
+            "unavailable": "❌ 𝗬𝗼𝘂𝗿 𝗿𝗲𝗾𝘂𝗲𝘀𝘁 𝗳𝗼𝗿 '{query}' 𝗶𝘀 𝗰𝘂𝗿𝗿𝗲𝗻𝘁𝗹𝘆 𝘂𝗻𝗮𝘃𝗮𝗶𝗹𝗮𝗯𝗹𝗲.",
+            "uploaded": "🎉 𝗬𝗼𝘂𝗿 𝗿𝗲𝗾𝘂𝗲𝘀𝘁 𝗳𝗼𝗿 '{query}' 𝗵𝗮𝘀 𝗯𝗲𝗲𝗻 𝘂𝗽𝗹𝗼𝗮𝗱𝗲𝗱.",
+            "already": "ℹ️ 𝗬𝗼𝘂𝗿 𝗿𝗲𝗾𝘂𝗲𝘀𝘁 𝗳𝗼𝗿 '{query}' 𝗶𝘀 𝗮𝗹𝗿𝗲𝗮𝗱𝘆 𝗮𝘃𝗮𝗶𝗹𝗮𝗯𝗹𝗲.",
+            "notreleased": "📺 𝗬𝗼𝘂𝗿 𝗿𝗲𝗾𝘂𝗲𝘀𝘁 𝗳𝗼𝗿 '{query}' 𝗶𝘀 𝗻𝗼𝘁 𝗿𝗲𝗹𝗲𝗮𝘀𝗲𝗱 𝗼𝗻 𝗢𝗧𝗧.",
+            "typo": "✏️ 𝗬𝗼𝘂𝗿 𝗿𝗲𝗾𝘂𝗲𝘀𝘁 𝗳𝗼𝗿 '{query}' 𝗵𝗮𝘀 𝗮 𝘀𝗽𝗲𝗹𝗹𝗶𝗻𝗴 𝗰𝗼𝗿𝗿𝗲𝗰𝘁𝗶𝗼𝗻.",
+            "lang": "🌐 𝗥𝗲𝗾𝘂𝗲𝘀𝘁𝗲𝗱 𝗹𝗮𝗻𝗴𝘂𝗮𝗴𝗲 𝗳𝗼𝗿 '{query}' 𝗶𝘀 𝗻𝗼𝘁 𝗮𝘃𝗮𝗶𝗹𝗮𝗯𝗹𝗲."
         }
 
-        query_text = REQUESTS.get(user_id, "your request")
+        query_text = REQUESTS.get(req_user_id, "your request")
         msg_text = status_messages.get(status, "ℹ️ Update on your request").format(query=query_text)
 
         # Send status to user or fallback to request channel
         try:
-            await bot.send_message(user_id, msg_text)
+            await bot.send_message(req_user_id, msg_text)
         except:
             await bot.send_message(
                 chat_id=REQST_CHANNEL,
-                text=f"{msg_text}\n📚 Requested by: {user_id}"
+                text=f"{msg_text}\n📚 Requested by: {req_user_id}"
             )
 
-        # Show only selected status as a disabled button
+        # Show only selected status as disabled button
         selected_button = InlineKeyboardMarkup([
             [InlineKeyboardButton(f"Status: {status.replace('_',' ').title()}", callback_data="disabled")]
         ])
@@ -1137,7 +1143,6 @@ async def callback_handler(bot, callback_query):
         await callback_query.answer(f"✅ Status sent: {msg_text}", show_alert=True)
 
     elif data == "disabled":
-        # Do nothing if button is disabled
         await callback_query.answer("⚠️ This option has already been selected.", show_alert=True)
     
 @Client.on_message(filters.command("send") & filters.user(ADMINS))
