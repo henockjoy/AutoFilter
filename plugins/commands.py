@@ -1115,12 +1115,12 @@ async def callback_handler(bot, callback_query):
         req_user_id = int(parts[2])
 
         status_messages = {
-            "unavailable": "❌ 𝗬𝗼𝘂𝗿 𝗿𝗲𝗾𝘂𝗲𝘀𝘁 𝗳𝗼𝗿 '{query}' 𝗶𝘀 𝗰𝘂𝗿𝗿𝗲𝗻𝘁𝗹𝘆 𝘂𝗻𝗮𝘃𝗮𝗶𝗹𝗮𝗯𝗹𝗲.",
-            "uploaded": "🎉 𝗬𝗼𝘂𝗿 𝗿𝗲𝗾𝘂𝗲𝘀𝘁 𝗳𝗼𝗿 '{query}' 𝗵𝗮𝘀 𝗯𝗲𝗲𝗻 𝘂𝗽𝗹𝗼𝗮𝗱𝗲𝗱.",
-            "already": "ℹ️ 𝗬𝗼𝘂𝗿 𝗿𝗲𝗾𝘂𝗲𝘀𝘁 𝗳𝗼𝗿 '{query}' 𝗶𝘀 𝗮𝗹𝗿𝗲𝗮𝗱𝘆 𝗮𝘃𝗮𝗶𝗹𝗮𝗯𝗹𝗲.",
-            "notreleased": "📺 𝗬𝗼𝘂𝗿 𝗿𝗲𝗾𝘂𝗲𝘀𝘁 𝗳𝗼𝗿 '{query}' 𝗶𝘀 𝗻𝗼𝘁 𝗿𝗲𝗹𝗲𝗮𝘀𝗲𝗱 𝗼𝗻 𝗢𝗧𝗧.",
-            "typo": "✏️ 𝗬𝗼𝘂𝗿 𝗿𝗲𝗾𝘂𝗲𝘀𝘁 𝗳𝗼𝗿 '{query}' 𝗵𝗮𝘀 𝗮 𝘀𝗽𝗲𝗹𝗹𝗶𝗻𝗴 𝗰𝗼𝗿𝗿𝗲𝗰𝘁𝗶𝗼𝗻.",
-            "lang": "🌐 𝗥𝗲𝗾𝘂𝗲𝘀𝘁𝗲𝗱 𝗹𝗮𝗻𝗴𝘂𝗮𝗴𝗲 𝗳𝗼𝗿 '{query}' 𝗶𝘀 𝗻𝗼𝘁 𝗮𝘃𝗮𝗶𝗹𝗮𝗯𝗹𝗲."
+            "❌ Unavailable": "❌ 𝗬𝗼𝘂𝗿 𝗿𝗲𝗾𝘂𝗲𝘀𝘁 𝗳𝗼𝗿 '{query}' 𝗶𝘀 𝗰𝘂𝗿𝗿𝗲𝗻𝘁𝗹𝘆 𝘂𝗻𝗮𝘃𝗮𝗶𝗹𝗮𝗯𝗹𝗲.",
+            "🎉 Uploaded": "🎉 𝗬𝗼𝘂𝗿 𝗿𝗲𝗾𝘂𝗲𝘀𝘁 𝗳𝗼𝗿 '{query}' 𝗵𝗮𝘀 𝗯𝗲𝗲𝗻 𝘂𝗽𝗹𝗼𝗮𝗱𝗲𝗱.",
+            "ℹ️ Already Available": "ℹ️ 𝗬𝗼𝘂𝗿 𝗿𝗲𝗾𝘂𝗲𝘀𝘁 𝗳𝗼𝗿 '{query}' 𝗶𝘀 𝗮𝗹𝗿𝗲𝗮𝗱𝘆 𝗮𝘃𝗮𝗶𝗹𝗮𝗯𝗹𝗲.",
+            "📺 Not Released On OTT": "📺 𝗬𝗼𝘂𝗿 𝗿𝗲𝗾𝘂𝗲𝘀𝘁 𝗳𝗼𝗿 '{query}' 𝗶𝘀 𝗻𝗼𝘁 𝗿𝗲𝗹𝗲𝗮𝘀𝗲𝗱 𝗼𝗻 𝗢𝗧𝗧.",
+            "✏️ Spelling": "✏️ 𝗬𝗼𝘂𝗿 𝗿𝗲𝗾𝘂𝗲𝘀𝘁 𝗳𝗼𝗿 '{query}' 𝗵𝗮𝘀 𝗮 𝘀𝗽𝗲𝗹𝗹𝗶𝗻𝗴 𝗰𝗼𝗿𝗿𝗲𝗰𝘁𝗶𝗼𝗻.",
+            "🌐 lang unavailable": "🌐 𝗥𝗲𝗾𝘂𝗲𝘀𝘁𝗲𝗱 𝗹𝗮𝗻𝗴𝘂𝗮𝗴𝗲 𝗳𝗼𝗿 '{query}' 𝗶𝘀 𝗻𝗼𝘁 𝗮𝘃𝗮𝗶𝗹𝗮𝗯𝗹𝗲."
         }
 
         query_text = REQUESTS.get(req_user_id, "your request")
