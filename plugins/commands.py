@@ -1012,128 +1012,133 @@ async def save_template(client, message):
     await save_group_settings(grp_id, 'template', template)
     await sts.edit(f"✅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ᴄʜᴀɴɢᴇᴅ ᴛᴇᴍᴘʟᴀᴛᴇ ꜰᴏʀ <code>{title}</code> ᴛᴏ\n\n{template}")
 
+# Store requests to map with user_id for callback
+REQUESTS = {}
 
+# Initial buttons: view + options
+def make_initial_buttons(message_link, user_id):
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton('👁️ View Request', url=message_link)],
+        [InlineKeyboardButton('⚙️ Options', callback_data=f'show_option#{user_id}')]
+    ])
+
+# Admin options buttons
+def make_option_buttons(user_id):
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton('Unavailable', callback_data=f'option#unavailable#{user_id}'),
+         InlineKeyboardButton('Uploaded', callback_data=f'option#uploaded#{user_id}')],
+        [InlineKeyboardButton('Already Available', callback_data=f'option#already#{user_id}'),
+         InlineKeyboardButton('Not Released on OTT', callback_data=f'option#notreleased#{user_id}')],
+        [InlineKeyboardButton('Typo / Correcting Spelling', callback_data=f'option#typo#{user_id}'),
+         InlineKeyboardButton('Requested Language Not Available', callback_data=f'option#lang#{user_id}')]
+    ])
+
+# Keywords for requests
+KEYWORDS = ["#request", "/request", "#Request", "/Request"]
+
+# /request handler
 @Client.on_message((filters.command(["request", "Request"]) | filters.regex("#request") | filters.regex("#Request")) & filters.group)
-async def requests(bot, message):
-    if REQST_CHANNEL is None or SUPPORT_CHAT_ID is None: return # Must add REQST_CHANNEL and SUPPORT_CHAT_ID to use this feature
-    if message.reply_to_message and SUPPORT_CHAT_ID == message.chat.id:
-        chat_id = message.chat.id
-        reporter = str(message.from_user.id)
-        mention = message.from_user.mention
-        success = True
-        content = message.reply_to_message.text
-        try:
-            if REQST_CHANNEL is not None:
-                btn = [[
-                        InlineKeyboardButton('ᴠɪᴇᴡ ʀᴇǫᴜᴇꜱᴛ', url=f"{message.reply_to_message.link}"),
-                        InlineKeyboardButton('ꜱʜᴏᴡ ᴏᴘᴛɪᴏɴꜱ', callback_data=f'show_option#{reporter}')
-                      ]]
-                reported_post = await bot.send_message(chat_id=REQST_CHANNEL, text=f"<b>📝 ʀᴇǫᴜᴇꜱᴛ : <u>{content}</u>\n\n📚 ʀᴇᴘᴏʀᴛᴇᴅ ʙʏ : {mention}\n📖 ʀᴇᴘᴏʀᴛᴇʀ ɪᴅ : {reporter}\n\n</b>", reply_markup=InlineKeyboardMarkup(btn))
-                success = True
-            elif len(content) >= 3:
-                for admin in ADMINS:
-                    btn = [[
-                        InlineKeyboardButton('ᴠɪᴇᴡ ʀᴇǫᴜᴇꜱᴛ', url=f"{message.reply_to_message.link}"),
-                        InlineKeyboardButton('ꜱʜᴏᴡ ᴏᴘᴛɪᴏɴꜱ', callback_data=f'show_option#{reporter}')
-                      ]]
-                    reported_post = await bot.send_message(chat_id=admin, text=f"<b>📝 ʀᴇǫᴜᴇꜱᴛ : <u>{content}</u>\n\n📚 ʀᴇᴘᴏʀᴛᴇᴅ ʙʏ : {mention}\n📖 ʀᴇᴘᴏʀᴛᴇʀ ɪᴅ : {reporter}\n\n</b>", reply_markup=InlineKeyboardMarkup(btn))
-                    success = True
-            else:
-                if len(content) < 3:
-                    await message.reply_text("<b>ʏᴏᴜ ᴍᴜꜱᴛ ᴛʏᴘᴇ ᴀʙᴏᴜᴛ ʏᴏᴜʀ ʀᴇǫᴜᴇꜱᴛ [ᴍɪɴɪᴍᴜᴍ 3 ᴄʜᴀʀᴀᴄᴛᴇʀꜱ]. ʀᴇǫᴜᴇꜱᴛꜱ ᴄᴀɴ'ᴛ ʙᴇ ᴇᴍᴘᴛʏ.</b>")
-            if len(content) < 3:
-                success = False
-        except Exception as e:
-            await message.reply_text(f"Error: {e}")
-            pass
-        
-    elif SUPPORT_CHAT_ID == message.chat.id:
-        chat_id = message.chat.id
-        reporter = str(message.from_user.id)
-        mention = message.from_user.mention
-        success = True
-        content = message.text
-        keywords = ["#request", "/request", "#Request", "/Request"]
-        for keyword in keywords:
-            if keyword in content:
-                content = content.replace(keyword, "")
-        try:
-            if REQST_CHANNEL is not None and len(content) >= 3:
-                btn = [[
-                        InlineKeyboardButton('ᴠɪᴇᴡ ʀᴇǫᴜᴇꜱᴛ', url=f"{message.link}"),
-                        InlineKeyboardButton('ꜱʜᴏᴡ ᴏᴘᴛɪᴏɴꜱ', callback_data=f'show_option#{reporter}')
-                      ]]
-                reported_post = await bot.send_message(chat_id=REQST_CHANNEL, text=f"<b>📝 ʀᴇǫᴜᴇꜱᴛ : <u>{content}</u>\n\n📚 ʀᴇᴘᴏʀᴛᴇᴅ ʙʏ : {mention}\n📖 ʀᴇᴘᴏʀᴛᴇʀ ɪᴅ : {reporter}\n\n</b>", reply_markup=InlineKeyboardMarkup(btn))
-                success = True
-            elif len(content) >= 3:
-                for admin in ADMINS:
-                    btn = [[
-                        InlineKeyboardButton('ᴠɪᴇᴡ ʀᴇǫᴜᴇꜱᴛ', url=f"{message.link}"),
-                        InlineKeyboardButton('ꜱʜᴏᴡ ᴏᴘᴛɪᴏɴꜱ', callback_data=f'show_option#{reporter}')
-                      ]]
-                    reported_post = await bot.send_message(chat_id=admin, text=f"<b>📝 ʀᴇǫᴜᴇꜱᴛ : <u>{content}</u>\n\n📚 ʀᴇᴘᴏʀᴛᴇᴅ ʙʏ : {mention}\n📖 ʀᴇᴘᴏʀᴛᴇʀ ɪᴅ : {reporter}\n\n</b>", reply_markup=InlineKeyboardMarkup(btn))
-                    success = True
-            else:
-                if len(content) < 3:
-                    await message.reply_text("<b>ʏᴏᴜ ᴍᴜꜱᴛ ᴛʏᴘᴇ ᴀʙᴏᴜᴛ ʏᴏᴜʀ ʀᴇǫᴜᴇꜱᴛ [ᴍɪɴɪᴍᴜᴍ 3 ᴄʜᴀʀᴀᴄᴛᴇʀꜱ]. ʀᴇǫᴜᴇꜱᴛꜱ ᴄᴀɴ'ᴛ ʙᴇ ᴇᴍᴘᴛʏ.</b>")
-            if len(content) < 3:
-                success = False
-        except Exception as e:
-            await message.reply_text(f"Error: {e}")
-            pass
-     
-    elif SUPPORT_CHAT_ID == message.chat.id:
-        chat_id = message.chat.id
-        reporter = str(message.from_user.id)
-        mention = message.from_user.mention
-        success = True
-        content = message.text
-        keywords = ["#request", "/request", "#Request", "/Request"]
-        for keyword in keywords:
-            if keyword in content:
-                content = content.replace(keyword, "")
-        try:
-            if REQST_CHANNEL is not None and len(content) >= 3:
-                btn = [[
-                        InlineKeyboardButton('ᴠɪᴇᴡ ʀᴇǫᴜᴇꜱᴛ', url=f"{message.link}"),
-                        InlineKeyboardButton('ꜱʜᴏᴡ ᴏᴘᴛɪᴏɴꜱ', callback_data=f'show_option#{reporter}')
-                      ]]
-                reported_post = await bot.send_message(chat_id=REQST_CHANNEL, text=f"<b>📝 ʀᴇǫᴜᴇꜱᴛ : <u>{content}</u>\n\n📚 ʀᴇᴘᴏʀᴛᴇᴅ ʙʏ : {mention}\n📖 ʀᴇᴘᴏʀᴛᴇʀ ɪᴅ : {reporter}\n\n</b>", reply_markup=InlineKeyboardMarkup(btn))
-                success = True
-            elif len(content) >= 3:
-                for admin in ADMINS:
-                    btn = [[
-                        InlineKeyboardButton('ᴠɪᴇᴡ ʀᴇǫᴜᴇꜱᴛ', url=f"{message.link}"),
-                        InlineKeyboardButton('ꜱʜᴏᴡ ᴏᴘᴛɪᴏɴꜱ', callback_data=f'show_option#{reporter}')
-                      ]]
-                    reported_post = await bot.send_message(chat_id=admin, text=f"<b>📝 ʀᴇǫᴜᴇꜱᴛ : <u>{content}</u>\n\n📚 ʀᴇᴘᴏʀᴛᴇᴅ ʙʏ : {mention}\n📖 ʀᴇᴘᴏʀᴛᴇʀ ɪᴅ : {reporter}\n\n</b>", reply_markup=InlineKeyboardMarkup(btn))
-                    success = True
-            else:
-                if len(content) < 3:
-                    await message.reply_text("<b>ʏᴏᴜ ᴍᴜꜱᴛ ᴛʏᴘᴇ ᴀʙᴏᴜᴛ ʏᴏᴜʀ ʀᴇǫᴜᴇꜱᴛ [ᴍɪɴɪᴍᴜᴍ 3 ᴄʜᴀʀᴀᴄᴛᴇʀꜱ]. ʀᴇǫᴜᴇꜱᴛꜱ ᴄᴀɴ'ᴛ ʙᴇ ᴇᴍᴘᴛʏ.</b>")
-            if len(content) < 3:
-                success = False
-        except Exception as e:
-            await message.reply_text(f"Error: {e}")
-            pass
+async def requests_handler(bot, message):
+    if REQST_CHANNEL is None or SUPPORT_CHAT_ID is None:
+        return
 
+    user_id = message.from_user.id
+    mention = message.from_user.mention
+
+    # Get content: either reply text or message text
+    if message.reply_to_message:
+        content = message.reply_to_message.text or ""
     else:
-        success = False
-    
-    if success:
-        '''if isinstance(REQST_CHANNEL, (int, str)):
-            channels = [REQST_CHANNEL]
-        elif isinstance(REQST_CHANNEL, list):
-            channels = REQST_CHANNEL
-        for channel in channels:
-            chat = await bot.get_chat(channel)
-        #chat = int(chat)'''
-        link = await bot.create_chat_invite_link(int(REQST_CHANNEL))
-        btn = [[
-                InlineKeyboardButton('ᴊᴏɪɴ ᴄʜᴀɴɴᴇʟ', url=link.invite_link),
-                InlineKeyboardButton('ᴠɪᴇᴡ ʀᴇǫᴜᴇꜱᴛ', url=f"{reported_post.link}")
-              ]]
-        await message.reply_text("<b>ʏᴏᴜʀ ʀᴇǫᴜᴇꜱᴛ ʜᴀꜱ ʙᴇᴇɴ ᴀᴅᴅᴇᴅ! ᴘʟᴇᴀꜱᴇ ᴡᴀɪᴛ ꜰᴏʀ ꜱᴏᴍᴇ ᴛɪᴍᴇ.\n\nᴊᴏɪɴ ᴄʜᴀɴɴᴇʟ ꜰɪʀꜱᴛ & ᴠɪᴇᴡ ʀᴇǫᴜᴇꜱᴛ.</b>", reply_markup=InlineKeyboardMarkup(btn))
+        content = message.text or ""
+
+    # Remove keywords
+    for kw in KEYWORDS:
+        content = content.replace(kw, "")
+    content = content.strip()
+
+    if len(content) < 3:
+        await message.reply_text("<b>⚠️ Your request must be at least 3 characters long.</b>")
+        return
+
+    REQUESTS[user_id] = content
+
+    try:
+        # Send request to request channel
+        btn = make_initial_buttons(message.link, user_id)
+        reported_post = await bot.send_message(
+            chat_id=REQST_CHANNEL,
+            text=f"📝 Request: <u>{content}</u>\n📚 Reported by: {mention}\n📖 Reporter ID: {user_id}",
+            reply_markup=btn
+        )
+
+        # Confirmation to the user
+        try:
+            confirm_btn = InlineKeyboardMarkup([
+                [InlineKeyboardButton('📢 Join Channel', url="https://t.me/YOUR_CHANNEL_USERNAME")],
+                [InlineKeyboardButton('👁️ View Request', url=reported_post.link)]
+            ])
+            await bot.send_message(
+                chat_id=user_id,
+                text=f"✅ Your request for '{content}' has been added. Please wait for some time.\n\nJoin the channel first & view the request.",
+                reply_markup=confirm_btn
+            )
+        except:
+            # User blocked bot → fallback to request channel
+            await bot.send_message(
+                chat_id=REQST_CHANNEL,
+                text=f"⚠️ Could not notify {mention}. User may have blocked the bot."
+            )
+
+    except Exception as e:
+        await message.reply_text(f"Error sending request: {e}")
+
+
+# Callback handler for admin options
+@Client.on_callback_query()
+async def callback_handler(bot, callback_query):
+    data = callback_query.data
+
+    if data.startswith("show_option#"):
+        user_id = int(data.split("#")[1])
+        await callback_query.message.edit_reply_markup(make_option_buttons(user_id))
+
+    elif data.startswith("option#"):
+        parts = data.split("#")
+        status = parts[1]
+        user_id = int(parts[2])
+
+        status_messages = {
+            "unavailable": "❌ Your request for '{query}' is currently unavailable.",
+            "uploaded": "🎉 Your request for '{query}' has been uploaded.",
+            "already": "ℹ️ Your request for '{query}' is already available.",
+            "notreleased": "📺 Your request for '{query}' is not released on OTT.",
+            "typo": "✏️ Your request for '{query}' has a spelling correction.",
+            "lang": "🌐 Requested language for '{query}' is not available."
+        }
+
+        query_text = REQUESTS.get(user_id, "your request")
+        msg_text = status_messages.get(status, "ℹ️ Update on your request").format(query=query_text)
+
+        # Send status to user or fallback to request channel
+        try:
+            await bot.send_message(user_id, msg_text)
+        except:
+            await bot.send_message(
+                chat_id=REQST_CHANNEL,
+                text=f"{msg_text}\n📚 Requested by: {user_id}"
+            )
+
+        # Show only selected status as a disabled button
+        selected_button = InlineKeyboardMarkup([
+            [InlineKeyboardButton(f"Status: {status.replace('_',' ').title()}", callback_data="disabled")]
+        ])
+        await callback_query.message.edit_reply_markup(selected_button)
+
+        await callback_query.answer(f"✅ Status sent: {msg_text}", show_alert=True)
+
+    elif data == "disabled":
+        # Do nothing if button is disabled
+        await callback_query.answer("⚠️ This option has already been selected.", show_alert=True)
     
 @Client.on_message(filters.command("send") & filters.user(ADMINS))
 async def send_msg(bot, message):
