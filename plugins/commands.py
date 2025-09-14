@@ -1086,7 +1086,8 @@ async def requests_handler(bot, message):
                 "📢 𝗝𝗢𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟 𝗙𝗜𝗥𝗦𝗧 & 𝗩𝗜𝗘𝗪 𝗥𝗘𝗤𝗨𝗘𝗦𝗧."
             ),
             reply_markup=support_btn,
-            disable_web_page_preview=True
+            disable_web_page_preview=True,
+            reply_to_message_id=message.message_id
         )
 
     except Exception as e:
