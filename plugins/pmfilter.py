@@ -361,7 +361,10 @@ async def advantage_spoll_choker(bot, query):
 async def qualities_cb_handler(client: Client, query: CallbackQuery):
 
     try:
-        if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
+        reply_from = None
+        if getattr(query.message, 'reply_to_message', None):
+            reply_from = getattr(query.message.reply_to_message, 'from_user', None)
+        if reply_from and int(query.from_user.id) not in [reply_from.id, 0]:
             return await query.answer(
                 f"⚠️ ʜᴇʟʟᴏ {query.from_user.first_name},\nᴛʜɪꜱ ɪꜱ ɴᴏᴛ ʏᴏᴜʀ ᴍᴏᴠɪᴇ ʀᴇǫᴜᴇꜱᴛ,\nʀᴇǫᴜᴇꜱᴛ ʏᴏᴜʀ'ꜱ...",
                 show_alert=True,
@@ -419,7 +422,10 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
     chat_id = query.message.chat.id
     message = query.message
     try:
-        if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
+        reply_from = None
+        if getattr(query.message, 'reply_to_message', None):
+            reply_from = getattr(query.message.reply_to_message, 'from_user', None)
+        if reply_from and int(query.from_user.id) not in [reply_from.id, 0]:
             return await query.answer(
                 f"⚠️ ʜᴇʟʟᴏ {query.from_user.first_name},\nᴛʜɪꜱ ɪꜱ ɴᴏᴛ ʏᴏᴜʀ ᴍᴏᴠɪᴇ ʀᴇǫᴜᴇꜱᴛ,\nʀᴇǫᴜᴇꜱᴛ ʏᴏᴜʀ'ꜱ...",
                 show_alert=True,
@@ -528,7 +534,10 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
 @Client.on_callback_query(filters.regex(r"^languages#"))
 async def languages_cb_handler(client: Client, query: CallbackQuery):
     try:
-        if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
+        reply_from = None
+        if getattr(query.message, 'reply_to_message', None):
+            reply_from = getattr(query.message.reply_to_message, 'from_user', None)
+        if reply_from and int(query.from_user.id) not in [reply_from.id, 0]:
             return await query.answer(
                 f"⚠️ ʜᴇʟʟᴏ {query.from_user.first_name},\nᴛʜɪꜱ ɪꜱ ɴᴏᴛ ʏᴏᴜʀ ᴍᴏᴠɪᴇ ʀᴇǫᴜᴇꜱᴛ,\nʀᴇǫᴜᴇꜱᴛ ʏᴏᴜʀ'ꜱ...",
                 show_alert=True,
@@ -586,7 +595,10 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
     chat_id = query.message.chat.id
     message = query.message
     try:
-        if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
+        reply_from = None
+        if getattr(query.message, 'reply_to_message', None):
+            reply_from = getattr(query.message.reply_to_message, 'from_user', None)
+        if reply_from and int(query.from_user.id) not in [reply_from.id, 0]:
             return await query.answer(
                 f"⚠️ ʜᴇʟʟᴏ {query.from_user.first_name},\nᴛʜɪꜱ ɪꜱ ɴᴏᴛ ʏᴏᴜʀ ᴍᴏᴠɪᴇ ʀᴇǫᴜᴇꜱᴛ,\nʀᴇǫᴜᴇꜱᴛ ʏᴏᴜʀ'ꜱ...",
                 show_alert=True,
@@ -695,7 +707,10 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
 @Client.on_callback_query(filters.regex(r"^seasons#"))
 async def seasons_cb_handler(client: Client, query: CallbackQuery):
     try:
-        if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
+        reply_from = None
+        if getattr(query.message, 'reply_to_message', None):
+            reply_from = getattr(query.message.reply_to_message, 'from_user', None)
+        if reply_from and int(query.from_user.id) not in [reply_from.id, 0]:
             return await query.answer(
                 f"⚠️ ʜᴇʟʟᴏ {query.from_user.first_name},\nᴛʜɪꜱ ɪꜱ ɴᴏᴛ ʏᴏᴜʀ ᴍᴏᴠɪᴇ ʀᴇǫᴜᴇꜱᴛ,\nʀᴇǫᴜᴇꜱᴛ ʏᴏᴜʀ'ꜱ...",
                 show_alert=True,
@@ -760,7 +775,10 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
     chat_id = query.message.chat.id
     message = query.message
     try:
-        if int(query.from_user.id) not in [query.message.reply_to_message.from_user.id, 0]:
+        reply_from = None
+        if getattr(query.message, 'reply_to_message', None):
+            reply_from = getattr(query.message.reply_to_message, 'from_user', None)
+        if reply_from and int(query.from_user.id) not in [reply_from.id, 0]:
             return await query.answer(
                 f"⚠️ ʜᴇʟʟᴏ {query.from_user.first_name},\nᴛʜɪꜱ ɪꜱ ɴᴏᴛ ʏᴏᴜʀ ᴍᴏᴠɪᴇ ʀᴇǫᴜᴇꜱᴛ,\nʀᴇǫᴜᴇꜱᴛ ʏᴏᴜʀ'ꜱ...",
                 show_alert=True,
@@ -1125,28 +1143,32 @@ async def cb_handler(client: Client, query: CallbackQuery):
         except Exception as e:
             await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start={ident}_{file_id}")
   
-    elif query.data.startswith("sendfiles"):
-        clicked = query.from_user.id
-        ident, key = query.data.split("#")
-        pre_user = await db.has_premium_access(clicked)
+    elif query.data.startswith("sendfiles#"):
+        _, key = query.data.split("#")
         settings = await get_settings(query.message.chat.id)
-        try:
-            if settings.get('is_shortlink') and not pre_user:
-                await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=sendfiles1_{key}")
-                return
-            else:
-                await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=allfiles_{key}")
-                return
-        except UserIsBlocked:
-            await query.answer('Uɴʙʟᴏᴄᴋ ᴛʜᴇ ʙᴏᴛ ᴍᴀʜɴ !', show_alert=True)
-        except PeerIdInvalid:
-            await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=sendfiles3_{key}")
-        except Exception as e:
-            logger.exception(e)
-            await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=sendfiles4_{key}")
-    
+        pre_user = await db.has_premium_access(query.from_user.id)
 
-    elif query.data.startswith("del"):
+        files = temp.GETALL.get(key)
+        if not files:
+            return await query.answer("❌ No cached results found.", show_alert=True)
+
+        # Shortlink handling
+        if settings.get("is_shortlink") and not pre_user:
+            await query.answer(url=f"https://t.me/{temp.U_NAME}?start=allfiles_{key}")
+            return
+
+        # Direct send all files
+        await query.answer("✅ Sending all files to your DM…", cache_time=2)
+        for file in files:
+            try:
+                await client.send_cached_media(
+                    chat_id=query.from_user.id,
+                    file_id=file.file_id,
+                    caption=file.caption or file.file_name,
+                    protect_content=True if settings.get("file_secure") else False
+                )
+            except Exception as e:
+                logger.exception(e)elif query.data.startswith("del"):
         ident, file_id = query.data.split("#")
         files_ = await get_file_details(file_id)
         if not files_:
