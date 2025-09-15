@@ -1168,7 +1168,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     protect_content=True if settings.get("file_secure") else False
                 )
             except Exception as e:
-                logger.exception(e)elif query.data.startswith("del"):
+                logger.exception(e)
+        elif query.data.startswith("del"):
         ident, file_id = query.data.split("#")
         files_ = await get_file_details(file_id)
         if not files_:
