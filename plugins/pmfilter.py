@@ -1169,7 +1169,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 )
             except Exception as e:
                 logger.exception(e)
-        elif query.data.startswith("del"):
+    elif query.data.startswith("del"):
         ident, file_id = query.data.split("#")
         files_ = await get_file_details(file_id)
         if not files_:
