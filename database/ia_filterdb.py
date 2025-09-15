@@ -12,6 +12,8 @@ from utils import get_settings, save_group_settings, temp, get_status
 from database.users_chats_db import add_name
 from .Imdbposter import get_movie_details, fetch_image
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from rapidfuzz import fuzz
+from urllib.parse import quote
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -200,102 +202,113 @@ def unpack_new_file_id(new_file_id):
     )
     file_ref = encode_file_ref(decoded.file_reference)
     return file_id, file_ref
-# ------------------------------
-# Duplicate Check
-# ------------------------------
-announced_collection = db["Announced"]
 
-async def already_announced(title: str) -> bool:
-    exists = await announced_collection.find_one({"title": title})
-    return exists is not None
+# --- Normalize titles to prevent duplicates ---
+def normalize_for_dup(title: str) -> str:
+    title = title.lower()
+    # Remove file tags, resolutions, encodings
+    title = re.sub(r'\b(1080p|720p|480p|x264|x265|10bit|HEVC|WEBRip|BluRay|DS4K)\b', '', title, flags=re.I)
+    # Remove punctuation
+    title = re.sub(r'[^\w\s]', '', title)
+    # Collapse multiple spaces
+    title = re.sub(r'\s+', ' ', title).strip()
+    return title
 
-async def mark_announced(title: str):
-    await announced_collection.insert_one({"title": title})
+# --- Fuzzy duplicate check ---
+async def already_announced_fuzzy(title: str, threshold=90):
+    all_announced = await get_all_announced_titles()  # Returns normalized titles
+    for t in all_announced:
+        if fuzz.ratio(title, t) >= threshold:
+            return True
+    return False
 
-
-# ------------------------------
-# Announce New File
-# ------------------------------
-async def send_msg(bot, filename, caption=""):
+# --- Main send message function ---
+async def send_msg(bot, filename, caption_text="", duration=None, resolution=None):
     try:
         # --- Clean filename ---
-        filename = re.sub(r'\(\@\S+\)|\[\@\S+\]|\b@\S+|\bwww\.\S+', '', filename).strip()
+        clean_file = re.sub(r'\(\@\S+\)|\[\@\S+\]|\b@\S+|\bwww\.\S+', '', filename).strip()
 
         # Detect year
-        year_match = re.search(r"\b(19|20)\d{2}\b", filename)
+        year_match = re.search(r"\b(19|20)\d{2}\b", clean_file)
         year = year_match.group(0) if year_match else None
 
         # Detect Season/Episode
-        season_match = re.search(r"(S\d{1,2})", filename, re.I)
-        episode_match = re.search(r"(E\d{1,2})", filename, re.I)
+        season_match = re.search(r"(S\d{1,2})", clean_file, re.I)
+        episode_match = re.search(r"(E\d{1,2})", clean_file, re.I)
 
+        # Detect language
+        languages = extract_language(clean_file, caption_text)
+
+        # Detect subtitles
+        subtitle = extract_subtitle(clean_file)
+
+        # Detect audio track from file tags (TEL, ENG, etc.)
+        audio_match = re.search(r"\b[A-Z]{2,3}\b", clean_file)
+        audio = LANG_MAP.get(audio_match.group(0).upper(), "Unknown") if audio_match else "Unknown"
+
+        # Determine type and clean title
         if season_match:  # TV Series
             file_type = "𝖳𝖵𝖲𝖤𝖱𝖨𝖤𝖲"
+            clean_title = clean_file.split(season_match.group(1))[0].strip()
             if episode_match:
-                clean_title = f"{filename.split(season_match.group(1))[0].strip()} {season_match.group(1).upper()}{episode_match.group(1).upper()}"
+                clean_title += f" {season_match.group(1).upper()}{episode_match.group(1).upper()}"
             else:
-                clean_title = f"{filename.split(season_match.group(1))[0].strip()} {season_match.group(1).upper()}"
+                clean_title += f" {season_match.group(1).upper()}"
         else:  # Movie
             file_type = "𝖬𝖮𝖵𝖨𝖤"
             if year:
-                clean_title = f"{filename.split(year)[0].strip()} {year}"
+                clean_title = f"{clean_file.split(year)[0].strip()} {year}"
             else:
-                clean_title = filename.split(".")[0].strip()
+                clean_title = clean_file.split(".")[0].strip()
 
         clean_title = re.sub(r"[\(\)\[\]\{\}:;'\-!.,_]+", " ", clean_title).strip()
-        normalized_title = clean_title.lower().strip()
+        normalized_title = normalize_for_dup(clean_title)
 
         # --- Duplicate check ---
-        if await already_announced(normalized_title):
-            logger.info(f"Skipping duplicate announcement for {clean_title}")
+        if await already_announced_fuzzy(normalized_title):
+            logging.info(f"Skipping duplicate announcement for {clean_title}")
             return
 
-        # --- Get IMDb + Trailer details (already implemented elsewhere) ---
-        details = await get_movie_details(clean_title)  # returns dict with imdb_url, rating, genres, trailer_url
-        imdb_url = details.get("imdb_url") if details else None
-        imdb_rating = details.get("rating") if details else None
+        # --- Get IMDb details ---
+        details = await get_movie_details(clean_title)
         genres = details.get("genres") if details else []
-        trailer_url = details.get("trailer_url") if details else None
 
         # --- Build caption ---
-        text = f"✅ {clean_title} #{file_type}\n\n"
-        if caption:
-            text += caption + "\n"
+        text = f"<b>✅ {clean_title} #{file_type}</b>\n\n"
 
-        # Ratings
-        rating_links = []
-        if imdb_rating:
-            rating_links.append(f"⭐ {imdb_rating}/10")
-        if imdb_url:
-            rating_links.append(f"<a href='{imdb_url}'>⭐ IMDb</a>")
-        if rating_links:
-            text += " | ".join(rating_links) + "\n"
+        # Languages & subtitles in blockquote
+        lang_line = ', '.join(languages) if languages else audio
+        sub_line = subtitle if subtitle else ""
+        text += f"<blockquote><b>🔊 {lang_line}</b>\n"
+        if sub_line:
+            text += f"<b>💬 {sub_line}</b>"
+        text += "</blockquote>\n\n"
 
         # Genres
         if genres:
-            text += "📽 " + ", ".join(genres[:2]) + "\n"  # max 2 genres
+            text += "<b>🎭 Genre:</b>" + ", ".join(genres[:2]) + "\n"
 
         # --- Buttons ---
-        btn = []
-        if trailer_url:
-            btn.append([InlineKeyboardButton("▶️ 𝖶𝖺𝗍𝖼𝗁 𝖳𝗋𝖺𝗂𝗅𝖾𝗋", url=trailer_url)])
-        btn.append([InlineKeyboardButton(
-            '📁 𝖢𝗅𝗂𝖼𝗄 𝗍𝗈 𝗌𝖾𝖺𝗋𝖼𝗁',
-            url=f"https://telegram.me/{temp.U_NAME}?start=getfile-{clean_title.replace(' ', '-')}"
-        )])
+        btn = [
+            [InlineKeyboardButton(
+                '📁 𝖢𝗅𝗂𝖼𝗄 𝗍𝗈 𝗌𝖾𝖺𝗋𝖼𝗁',
+                url=f"https://telegram.me/{temp.U_NAME}?start=getfile-{quote(clean_title)}"
+            )]
+        ]
 
         # --- Send message ---
         await bot.send_message(
             chat_id=MOVIE_UPDATE_CHANNEL,
             text=text,
-            reply_markup=InlineKeyboardMarkup(btn)
+            reply_markup=InlineKeyboardMarkup(btn),
+            parse_mode="HTML"
         )
 
         # --- Mark as announced ---
         await mark_announced(normalized_title)
 
     except Exception as e:
-        logger.error(f"Error in send_msg: {e}", exc_info=True)
+        logging.error(f"Error in send_msg: {e}", exc_info=True)
 
 
 async def get_qualities(text, qualities: list):
