@@ -1233,10 +1233,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     result = await Media.collection.delete_one({
                         '_id': file_ids,
                     })
-                    if not result.deleted_count:
-                        result = await Media2.collection.delete_one({
-                            '_id': file_ids,
-                        })
                     if result.deleted_count:
                         logger.info(f'ꜰɪʟᴇ ꜰᴏᴜɴᴅ ꜰᴏʀ ʏᴏᴜʀ ǫᴜᴇʀʏ {keyword}! ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ {file_name} ꜰʀᴏᴍ ᴅᴀᴛᴀʙᴀꜱᴇ.')
                     deleted += 1
